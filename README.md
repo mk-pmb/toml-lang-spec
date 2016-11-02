@@ -155,6 +155,9 @@ String
 There are four ways to express strings: basic, multi-line basic, literal, and
 multi-line literal. All strings must contain only valid UTF-8 characters.
 
+
+### Basic string
+
 **Basic strings** are surrounded by quotation marks. Any Unicode character may
 be used except those that must be escaped: quotation mark, backslash, and the
 control characters (U+0000 to U+001F).
@@ -183,6 +186,9 @@ The escape codes must be valid Unicode [scalar values](http://unicode.org/glossa
 All other escape sequences not listed above are reserved and, if used, TOML
 should produce an error.
 
+
+### Multi-line basic string
+
 Sometimes you need to express passages of text (e.g. translation files) or would
 like to break up a very long string into multiple lines. TOML makes this easy.
 **Multi-line basic strings** are surrounded by three quotation marks on each
@@ -206,13 +212,25 @@ str2 = "Roses are red\nViolets are blue"
 str3 = "Roses are red\r\nViolets are blue"
 ```
 
-For writing long strings without introducing extraneous whitespace, end a line
-with a `\`. The `\` will be trimmed along with all whitespace (including
-newlines) up to the next non-whitespace character or closing delimiter. If the
-first characters after the opening delimiter are a backslash and a newline, then
-they will both be trimmed along with all whitespace and newlines up to the next
-non-whitespace character or closing delimiter. All of the escape sequences that
-are valid for basic strings are also valid for multi-line basic strings.
+For writing long strings without introducing extraneous whitespace,
+end a line¹ with an unescaped backslash (`\`).
+The backslash will be trimmed along with all whitespace (including newlines)
+up to the next non-whitespace character or closing delimiter.
+
+<details><summary>¹ A "line" is… &#x25BE;</summary>
+<blockquote>
+meant as what appears as a line to human readers, to keep TOML obvious.
+The backslash is thus considered at the end of the line even if the file
+data has whitespace between the backslash and the next newline character.
+</blockquote>
+</details>
+
+All of the escape sequences that are valid for basic strings are also
+valid for multi-line basic strings.
+
+Any Unicode character may be used except those that must be escaped: backslash
+and the control characters (U+0000 to U+001F). Quotation marks need not be
+escaped unless their presence would create a premature closing delimiter.
 
 ```toml
 # The following strings are byte-for-byte equivalent:
@@ -232,9 +250,35 @@ key3 = """\
        """
 ```
 
-Any Unicode character may be used except those that must be escaped: backslash
-and the control characters (U+0000 to U+001F). Quotation marks need not be
-escaped unless their presence would create a premature closing delimiter.
+A line-merging backslash works at any source file line inside the delimiters.
+There's no requirement that it has to be preceded by non-whitespace.
+It can occur as the first character after the opening delimiter, or right after
+whitespace that had been trimmed due to a previous line-merging backslash.
+
+```toml
+# To help you read this example, some literal tab characters (U+0009)
+# are depicted as ↹, and some space characters (U+0020) as ␣.
+
+# The following strings are byte-for-byte equivalent:
+hello1 = """hello world"""
+hello2 = """\
+              hello \
+    world\␣
+                """
+hello3 = """\
+↹
+
+    \   ↹␣
+    \
+          ␣
+                    \↹
+
+  hello \
+      world"""
+```
+
+
+### Literal string
 
 If you're a frequent specifier of Windows paths or regular expressions, then
 having to escape backslashes quickly becomes tedious and error prone. To help,
@@ -249,6 +293,9 @@ winpath2 = '\\ServerX\admin$\system32\'
 quoted   = 'Tom "Dubs" Preston-Werner'
 regex    = '<\i\c*\s*>'
 ```
+
+
+### Multi-line literal string
 
 Since there is no escaping, there is no way to write a single quote inside a
 literal string enclosed by single quotes. Luckily, TOML supports a multi-line
